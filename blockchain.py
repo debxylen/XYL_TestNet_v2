@@ -2,11 +2,15 @@ import hashlib
 import json
 from tx_decode import tx_decode
 import time
+from crypt_util import encrypt, decrypt
 import os
 import pickle
 from web3 import Web3
 from block import Block
 from transaction import Transaction
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 class Blockchain:
     def __init__(self):
@@ -146,11 +150,13 @@ class Blockchain:
 
     def save_balances(self):
         with open('balances', 'wb') as f:
-            pickle.dump(self.balances, f)
+            encrypted_file = encrypt(self.balances, os.getenv("KEY"))
+            pickle.dump(encrypted_file, f)
 
     def load_balances(self):
         with open('balances', 'rb') as f:
-            self.balances = pickle.load(f)
+            decrypted_file = decrypt(f.read(), os.getenv("KEY"))
+            self.balances = pickle.loads(decrypted_file)
 
     def get_transaction_receipt(self, transaction_id: str):
         """Get the transaction receipt for a specific transaction."""
