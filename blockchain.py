@@ -2,7 +2,7 @@ import hashlib
 import json
 from tx_decode import tx_decode
 import time
-from crypt_util import encrypt, decrypt
+from crypt_util import ep_save, ep_load
 import os
 import pickle
 from web3 import Web3
@@ -140,23 +140,17 @@ class Blockchain:
                     count += 1
         return count
 
-    def save_chain(self):
-        with open('blockchain', 'wb') as f:
-            pickle.dump(self.chain, f)
-
-    def load_chain(self):
-        with open('blockchain', 'rb') as f:
-            self.chain = pickle.load(f)
-
     def save_balances(self):
-        with open('balances', 'wb') as f:
-            encrypted_file = encrypt(self.balances, os.getenv("KEY"))
-            pickle.dump(encrypted_file, f)
+        ep_save(self.balances, 'balances', os.getenv("KEY"))
 
     def load_balances(self):
-        with open('balances', 'rb') as f:
-            decrypted_file = decrypt(f.read(), os.getenv("KEY"))
-            self.balances = pickle.loads(decrypted_file)
+        self.balances = ep_load('balances', os.getenv("KEY"))
+
+    def save_chain(self):
+        ep_save(self.chain, 'blockchain', os.getenv("KEY"))
+
+    def load_chain(self):
+        self.chain = ep_load('blockchain', os.getenv("KEY"))
 
     def get_transaction_receipt(self, transaction_id: str):
         """Get the transaction receipt for a specific transaction."""
