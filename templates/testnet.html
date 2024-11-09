@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Connect MetaMask</title>
+</head>
+<body>
+    <h1>Connect Your MetaMask Wallet</h1>
+    <button id="connectButton">Connect Wallet</button>
+    <p id="walletAddress"></p>
+    <button id="sendTransactionButton" style="display:none;">Send 100 XYL</button>
+
+    <script>
+        const connectButton = document.getElementById('connectButton');
+        const walletAddressElement = document.getElementById('walletAddress');
+        const sendTransactionButton = document.getElementById('sendTransactionButton');
+
+        connectButton.onclick = async () => {
+            // Request wallet connection
+            if (window.ethereum) {
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                const address = accounts[0];
+                walletAddressElement.innerText = `Wallet Address: ${address}`;
+                sendTransactionButton.style.display = 'block';
+
+                // Set up event listener for sending a transaction
+                sendTransactionButton.onclick = async () => {
+                    const response = await fetch('http://localhost:8545/add_balance', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            address: address,  // Using the connected wallet address
+                            amount: "1000000000000000000",     // Amount to send
+                        }),
+                    });
+                    const data = await response.json();
+                    console.log(data);
+                };
+            } else {
+                alert('Please install MetaMask!');
+            }
+        };
+    </script>
+</body>
+</html>

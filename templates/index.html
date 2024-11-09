@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Network to MetaMask</title>
+</head>
+<body>
+    <h1>Add Custom Network to MetaMask</h1>
+    <button id="addNetworkButton">Add XYL Testnet to MetaMask</button>
+    <p id="statusMessage"></p>
+
+    <script>
+        const addNetworkButton = document.getElementById('addNetworkButton');
+        const statusMessage = document.getElementById('statusMessage');
+
+        addNetworkButton.onclick = async () => {
+            if (window.ethereum) {
+                try {
+                    await window.ethereum.request({
+                        method: "wallet_addEthereumChain",
+                        params: [
+                            {
+                                chainId: "0x1B16",
+                                chainName: "XYL Testnet",
+                                rpcUrls: ["https://horribly-nearby-dragon.ngrok-free.app"],
+                                nativeCurrency: {
+                                    name: "XYL Test Token",
+                                    symbol: "XYL",
+                                    decimals: 18,
+                                },
+                                blockExplorerUrls: [],
+                                iconUrls: []
+                            },
+                        ],
+                    });
+                    statusMessage.innerText = "XYL Testnet successfully added to MetaMask!";
+                } catch (error) {
+                    console.error("Error adding network:", error);
+                    statusMessage.innerText = "Failed to add network. Check console for more details.";
+                }
+            } else {
+                statusMessage.innerText = "MetaMask is not installed. Please install MetaMask first.";
+            }
+        };
+    </script>
+</body>
+</html>
