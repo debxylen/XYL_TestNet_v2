@@ -5,7 +5,6 @@ import time
 from crypt_util import ep_save, ep_load
 import os
 import pickle
-from web3 import Web3
 from block import Block
 from transaction import Transaction
 from dotenv import load_dotenv

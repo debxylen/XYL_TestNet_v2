@@ -55,4 +55,6 @@ class Block:
             'transactions': [tx.__json__() for tx in self.transactions],
             'nonce': self.nonce,
             'merkle_root': self.merkle_root,
+            'hash': self.hash,
+            'timestamp': self.timestamp
         }  
