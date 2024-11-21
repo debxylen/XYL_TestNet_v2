@@ -1,19 +1,30 @@
 import hashlib
 import json
 import time
+import traceback
+from errors import *
 
 class Transaction:
     def __init__(self, sender, recipient, amount, timestamp=None):
-        self.sender = sender  # Sender's wallet address
-        self.recipient = recipient  # Recipient's wallet address
-        self.amount = amount  # Amount of XYL tokens being transferred
-        self.timestamp = timestamp or time.time()  # Timestamp of the transaction
-        self.tx_hash = self.compute_hash()  # Transaction hash for integrity
+        """
+        Initializes a transaction.
 
+        :param sender: Wallet address of the sender.
+        :param recipient: Wallet address of the recipient.
+        :param amount: Amount of XYL tokens being transferred.
+        :param timestamp: Optional timestamp; if None, current time is used.
+        """
+        self.sender = sender
+        self.recipient = recipient
+        self.amount = amount
+        self.timestamp = timestamp or time.time()  # Default to current time
+        self.tx_hash = self.compute_hash()  # Unique transaction hash for integrity
 
     def compute_hash(self):
         """
-        Compute the SHA-256 hash of the transaction details.
+        Computes the SHA-256 hash of the transaction details.
+
+        :return: SHA-256 hash string representing the transaction.
         """
         tx_string = json.dumps({
             'sender': self.sender,
@@ -25,31 +36,45 @@ class Transaction:
 
     def is_valid(self, sender_balance):
         """
-        Validate the transaction.
-        Checks that the amount is greater than zero and that the sender has enough balance.
-        
-        Args:
-            sender_balance (float): The current balance of the sender.
+        Validates the transaction.
 
-        Returns:
-            bool: True if the transaction is valid, False otherwise.
+        Ensures the amount is positive and the sender has sufficient balance.
+
+        :param sender_balance: The current balance of the sender.
+        :return: True if the transaction is valid, False otherwise.
         """
-
-        #if self.amount <= 0:
-        #    print("Invalid transaction: Amount must be greater than zero.")
-        #    return False
-        
         if self.amount > sender_balance:
-            print(f"Invalid transaction: Insufficient funds (Balance: {sender_balance}, Tx Amount: {self.amount}.")
             return False
 
-        # Additional validations can be added, such as checking transaction signatures
         return True
 
     def __json__(self):
+        """
+        Converts the transaction into a JSON-compatible dictionary.
+
+        :return: A dictionary representation of the transaction.
+        """
         return {
             'sender': self.sender,
             'recipient': self.recipient,
+            'timestamp': self.timestamp,
             'amount': self.amount,
-            'hash': self.tx_hash,
+            'hash': self.tx_hash
         }
+
+def tx_from_json(data):
+    """
+    Reconstructs a Transaction object from a JSON dictionary.
+
+    :param data: A dictionary containing transaction details.
+    :return: A Transaction object.
+    """
+    sender = data['sender']
+    recipient = data['recipient']
+    amount = data['amount']
+    timestamp = data['timestamp']
+
+    # Recreate the transaction
+    tx = Transaction(sender, recipient, amount, timestamp)
+    tx.tx_hash = data['hash']  # Set the hash explicitly for consistency
+    return tx

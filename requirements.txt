@@ -1,0 +1,8 @@
+flask
+python-dotenv
+web3
+cryptography
+rlp
+eth-typing
+eth-utils
+vyper
