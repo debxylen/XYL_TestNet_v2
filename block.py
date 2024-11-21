@@ -2,7 +2,7 @@ import hashlib
 import time
 import json
 import traceback
-
+from errors import *
 class Block:
     def __init__(self, index, previous_hash, transactions, nonce=0):
         """

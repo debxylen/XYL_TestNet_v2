@@ -6,20 +6,20 @@ from errors import *
 
 
 class SmartContract:
-    def __init__(self, owner, contractmngr, tdata=None):
+    def __init__(self, blockchain, owner, tdata=None):
         self.owner = owner.lower()
         self.state = {}
-        self.manager = contractmngr
+        self.blockchain = blockchain
         self.locked = False
         self.native_methods = ["xyl_destroy", "xyl_transferOwner", "xyl_getInfo", "xyl_lock", "xyl_unlock"]
         
         # Generate contract address
         deployer_bytes = Web3.to_bytes(hexstr=owner)
-        nonce_bytes = int(self.manager.blockchain.get_transaction_count(owner)).to_bytes(32, 'big')
+        nonce_bytes = int(self.blockchain.get_transaction_count(owner)).to_bytes(32, 'big')
         data = deployer_bytes + nonce_bytes
-        self.address = Web3.keccak(data)[12:].hex()
+        self.address = str(Web3.keccak(data)[12:].hex())
         
-        self.manager.add(self)
+        self.blockchain.contract_manager.add(self)
         if tdata:
             try:
                 self.methods = json.loads(hex_to_string(tdata))
@@ -30,13 +30,13 @@ class SmartContract:
 
     def balance(self) -> int:
         # Get the balance of the contract
-        return int(self.manager.blockchain.get_balance(self.address))
+        return int(self.blockchain.get_balance(self.address))
 
     def send_funds(self, recipient, amount):
         # Send funds to the recipient
         if self.balance() < int(amount):
-            raise InsufficientBalanceError("Insufficient contract balance.")
-        self.manager.blockchain.add_transaction(self.address, recipient, int(amount))
+            raise InsufficientBalanceError(f"Insufficient contract balance: having {self.balance()/(10**18)} XYL, trying to send {int(amount)/(10**18)}.")
+        self.blockchain.add_transaction(self.address, recipient, int(amount))
         return 1
 
     def set(self, key, value):
@@ -53,8 +53,8 @@ class SmartContract:
         caller = caller.lower()
         if caller != self.owner:
             raise PermissionDeniedError("Only the owner can destroy the contract.")
-        self.manager.blockchain.add_transaction(self.address, self.owner, self.balance())  # send contract balance to owner
-        self.manager.delete(self.address)
+        self.blockchain.add_transaction(self.address, self.owner, self.balance())  # send contract balance to owner
+        self.blockchain.contract_manager.delete(self.address)
         return {"result": "Contract destroyed successfully"}
 
     def get_contract_info(self):
@@ -93,10 +93,11 @@ class SmartContract:
             "data": data,
             "timestamp": time.time()  # Current timestamp
         }
-        self.manager.blockchain.event_log.append(event)
+        self.blockchain.event_log.append(event)
         return 1
 
-    def execute(self, data, caller):
+    def execute(self, new_blockchain, data, caller):
+        self.blockchain = new_blockchain
         caller = caller.lower()
         try:
             method_name, args = hex_to_string(data).split("|XYL|")
@@ -128,7 +129,7 @@ class SmartContract:
         try:
             for instruction in instructions:
                 parts = instruction.split(" ")
-                op = parts[0]
+                op = str(parts[0].strip())
 
                 if op == "PUSH_ARG":
                     arg_name = parts[1]
@@ -136,7 +137,7 @@ class SmartContract:
                         raise InvalidExecutionData(f"Missing argument for {instruction}")
                     stack.append(args[arg_name])
 
-                if op == "PUSH":
+                elif op == "PUSH":
                     value = parts[1]
                     stack.append(value)
 
@@ -207,7 +208,7 @@ class ContractManager:
         self.blockchain = blockchain
 
     def add(self, contract):
-        self.contracts[contract.address] = contract
+        self.contracts[contract.address.lower()] = contract
 
     def delete(self, c_address):
         if c_address not in self.contracts:

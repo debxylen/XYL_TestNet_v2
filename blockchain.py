@@ -12,6 +12,7 @@ from smartcontract import SmartContract, ContractManager
 import traceback
 from dotenv import load_dotenv
 from utils import *
+from errors import *
 load_dotenv()
 
 class Blockchain:
@@ -123,20 +124,7 @@ class Blockchain:
             if block.hash == block_hash:
                 print(f"Duplicate block hash found: {block_hash}")
                 return False, block_hash
-        return str(block_hash).startswith(target), block_hash
-
-    def validate_mined_block(self, block, miner_nonce):
-        """Validate the mined block."""
-        try:
-            txs = [tx_from_json(t) for t in block['transactions']]
-            target = '0' * block['difficulty']
-            block_header = f"{block['previous_hash']}{json.dumps(txs)}{miner_nonce}"
-            block_hash = hashlib.sha256(block_header.encode()).hexdigest()
-            if str(block_hash).startswith(target):
-                return True, block_hash
-            raise InvalidBlockError(f"Block hash {block_hash} does not meet difficulty target: {target}")
-        except Exception as e:
-            raise ConsensusError(f"Error during block validation: {e}")      
+        return str(block_hash).startswith(target), block_hash      
       
     def submit_mined_block(self, mined_block, miner):
         """Add a mined block to the blockchain."""
@@ -162,12 +150,10 @@ class Blockchain:
             self.chain.append(new_block)
             self.unconfirmed_transactions = []  # Clear unconfirmed transactions
             amt = find_actual_amount(amount, 0.003469)
-            self.update_balance(sender, -amount)  # Deduct amount (excluding gas) from sender (total -gas)
+            self.update_balance(sender, -amt)  # Deduct amount (including gas) from sender
             self.update_balance(recipient, amount)  # Add amount to recipient (after gas) (total - gas)
-            self.update_balance(sender, -(0.003469*amt))  # Deduct gas from sender (gas, or total*0.003469)
             self.update_balance('network', 0.002400*amt)  # Give some gas to network (total*0.002400)
             self.update_balance(miner, 0.001069*amt)  # Add miner reward from gas (total*001069)
-
 
             self.save_chain()
             self.save_balances()
@@ -212,14 +198,14 @@ class Blockchain:
 
             if len(tx_dict.get('data'))>0 and str(recipient)=='None':  # Contract deployment with compiled bytecode
                 c_code = tx_dict["data"]
-                contract_address = SmartContract(sender, self.contract_manager, c_code).address
+                contract_address = SmartContract(self, sender, c_code).address
                 print(f"[LOG] Contract Creation: {contract_address}")
                 return {"contractAddress": contract_address}
 
             elif len(tx_dict.get('data'))>0 and (not str(tx_dict.get('data')) == '0x') and len(recipient)>0 and str(recipient).startswith('0x'):  # Contract execution
                 contract_address = recipient.lower()
                 data = tx_dict["data"]
-                response = self.contract_manager.contracts[contract_address].execute(data, sender)
+                response = self.contract_manager.contracts[contract_address.lower()].execute(self, data, sender)
                 print(f"[LOG] Contract Execution: {contract_address} {data}")
                 return response
 
@@ -265,15 +251,19 @@ class Blockchain:
         """Get the transaction receipt for a specific transaction."""
         for block in self.chain:
             for index, transaction in enumerate(block.transactions):
-                if transaction.tx_hash == transaction_id:
+                if int(block.index) == int(transaction_id):
+                    if transaction.amount == 0:
+                        gas = int(0.003469 * (10**18))
+                    else:
+                        gas = int(0.003469 * transaction.amount)
                     return {
                         'blockHash': block.hash,
                         'blockNumber': hex(block.index),
                         'contractAddress': None,
-                        'cumulativeGasUsed': hex(int(0.003469 * transaction.amount)),
+                        'cumulativeGasUsed': hex(gas),
                         'effectiveGasPrice': hex(1),
                         'from': transaction.sender,
-                        'gasUsed': hex(int(0.003469 * transaction.amount)),
+                        'gasUsed': hex(gas),
                         'status': hex(1),
                         'to': transaction.recipient,
                         'transactionHash': transaction.tx_hash,

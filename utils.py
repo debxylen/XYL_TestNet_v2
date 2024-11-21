@@ -3,7 +3,6 @@ def hex_to_string(hex_string):
     hex_string = str(hex_string)
     if hex_string.startswith("0x"):
         hex_string = hex_string[2:]
-    print(hex_string)
     return bytes.fromhex(hex_string).decode('utf-8')
   
 def string_to_hex_with_prefix(input_string):

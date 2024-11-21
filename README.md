@@ -1,58 +1,56 @@
 # XYL Testnet
 
-Welcome to **XYL TestNet**, a blockchain network designed to be fast, simple, and straightforward without compromising quality.
-
-**XYL TestNet** is the proving ground for the upcoming XYL MainNet, a fast and secure blockchain that supports a variety of use cases, including cryptocurrency transactions, decentralized finance (DeFi), and beyond. Our Testnet ensures that all features of XYL are rigorously tested in a safe environment, allowing developers and enthusiasts to explore the network's capabilities with confidence.
-
----
+XYL Testnet is a blockchain network created for testing and development purposes, specifically designed to evaluate the functionality and features of the XYL ecosystem. This testnet is used to simulate transactions, mining, and other blockchain operations before the official release of XYL's mainnet.
 
 ## 🌟 Key Features
 
-- **Fast Block Times (2-5 seconds)**: Experience near-instant transaction finality and rapid block propagation with XYL's fast block times.
-- **Scalable and Secure**: XYL Testnet is designed to handle a high transaction volume while maintaining the security and integrity of the network.
+- **PoW Consensus**: Proof-of-Work consensus with fast processing times.
+- **RPC Access**: EVM-compatible RPC interface, providing an easy connection for interacting with the blockchain (e.g., MetaMask).
+- **Smart Contracts**: Custom smart contracts to enable decentralized applications (dApps).
+- **Fast Block Times (2-5 seconds)**: Experience near-instant transaction processing and rapid block propagation with XYL's fast block times.
+- **Simple and Secure**: XYL Testnet is designed to have a simple interface while maintaining the security and integrity of the network.
 - **EVM-Compatible**: XYL supports Ethereum-style transactions and smart contracts, enabling developers to leverage existing Ethereum tools and libraries.
-- **Transaction and Gas System**: XYL Testnet implements a customizable gas and transaction fee structure, ensuring smooth operation and incentivizing validators.
-- **Decentralized Network**: Our Testnet is powered by a network of validators, ensuring the decentralized nature of XYL while also testing validator consensus mechanisms.
-- **Real-Time Analytics**: Track your transactions and network stats in real time with advanced analytics tools.
 
----
-
-## 🛠️ Getting Started
-
-To begin interacting with the XYL Testnet, follow these steps:
-
-### 1. **Add the network to MetaMask**
-
-
----
-
-## 💡 Key Benefits
-
-- **Test New Features Safely**: Test your projects on the XYL Testnet before deploying them on the upcoming mainnet. Avoid risks of spending actual money and ensure your application is fully functional.
-- **Faucets**: Receive free test tokens every 24h to test your apps with.
-- **Fast Transactions**: Extremely fast transaction speed ensures you can move your tokens in and out easily and quickly.
-
----
-
-## 🔧 XYL Testnet Protocol
+## 🧪 XYL Testnet Protocol
 
 - **Block Time**: 2-5 seconds
-- **Consensus Mechanism**: Proof-of-Work (PoW) (there are plans to transition to Byzantine Fault Tolerance 'BFT' in the future, though there is a very low chance of implementing this change.)
-- **Transaction Fees**: XYL's gas model ensures fair and efficient use of network resources and rewards to miners.
+- **Consensus Mechanism**: Proof-of-Work (PoW) with future plans for Proof-of-Stake (PoS)
+- **Transaction Fees**: XYL's gas model ensures fair and efficient use of network resources and miner reward.
 - **Network Speed**: Designed for high throughput with low latency.
 
----
+## ❓ How to Interact with XYL Testnet
 
-## 🚀 Join the XYL Testnet
+You can connect to it via MetaMask (or an EVM-compatible wallet) or interact with it directly through your Python environment.
 
-I wish to have you onboard as part of the XYL community! If you encounter any issues or have any questions, please visit the [official documentation](#), or reach out via the [Discord](#) server.
+### 🦊 MetaMask Setup
 
----
+1. Open MetaMask and go to **Settings** > **Networks** > **Add Network**.
+2. Enter the following details:
+   - **Network Name**: XYL TestNet
+   - **New RPC URL**: `https://xyl-testnet.glitch.me/rpc/`
+   - **Chain ID**: `6934`
+   - **Currency Symbol**: XYL
+3. Save and connect MetaMask to the XYL TestNet.
+
+## 💡 Key Benefits for Developers
+
+- **Test New Features Safely**: Test your projects on the XYL Testnet without the risk of spending actual money.
+- **Faucets**: Get free test tokens to test your dApps or projects without spending actual valuable tokens.
+- **Simple & Straightforward Contract Codes**: Contracts can be easily programmed with XYL's own instruction set.
+- **Python support**: Interaction with the network is straightforward for developers due to python libraries programmed exclusively for making interaction with the XYL ecosystem easier.
+
+## 🛣 Roadmap
+
+- **Mainnet (Coming Soon)**: The XYL Testnet will serve as the foundation for the upcoming XYL mainnet. Stay tuned for the official launch.
 
 ## 📝 License
 
-XYL Testnet is licensed under the [AGPL License](#). Any modifications or improvements made to the software, especially if used over a network, are required to be shared with the community.
+XYL Testnet is licensed under the [AGPL License](#). Any modifications or improvements made to the software, especially if used over a network, must be shared with the community.
 
----
+## 🤝 Contributing
 
-Happy developing and testing with XYL Testnet! 🚀
+Feel free to experiment with the XYL Testnet and provide feedback or suggestions for improvements. Contributions are welcome!
+
+## 🚀 Join the XYL Testnet
+
+If you encounter any issues or have any questions, please visit the [official documentation](#), or reach out via the [Discord](#) server.

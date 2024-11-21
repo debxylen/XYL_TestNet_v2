@@ -3,6 +3,7 @@ from pprint import pprint
 from typing import Optional
 import traceback
 import rlp
+from errors import *
 from eth_typing import HexStr
 from eth_utils import keccak, to_bytes
 from rlp.sedes import Binary, big_endian_int, binary

@@ -1,4 +1,5 @@
 from web3 import Web3
+from errors import *
 from eth_account import Account
 from eth_account._utils.legacy_transactions import (
     serializable_unsigned_transaction_from_dict,
