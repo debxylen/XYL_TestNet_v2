@@ -14,7 +14,7 @@ XYL Testnet is a blockchain network created for testing and development purposes
 ## 🧪 XYL Testnet Protocol
 
 - **Block Time**: 2-5 seconds
-- **Consensus Mechanism**: Proof-of-Work (PoW) with future plans for Proof-of-Stake (PoS)
+- **Consensus Mechanism**: Proof-of-Work (PoW) with future plans for a hybrid-BFT variant.
 - **Transaction Fees**: XYL's gas model ensures fair and efficient use of network resources and miner reward.
 - **Network Speed**: Designed for high throughput with low latency.
 
