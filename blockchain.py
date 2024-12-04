@@ -166,8 +166,10 @@ class Blockchain:
         """Retrieve a transaction by its hash."""
         for block in self.chain:
             for transaction in block.transactions:
-                if transaction.hash == tx_hash:
-                    return transaction
+                if transaction.tx_hash == tx_hash:
+                    tx_data = transaction.__json__()
+                    tx_data['blockNumber'] = block.index
+                    return tx_data
         return None
 
     def get_block_by_hash(self, block_hash):
@@ -269,5 +271,6 @@ class Blockchain:
                         'transactionHash': transaction.tx_hash,
                         'transactionIndex': hex(index),
                         'type': 0,
+                        'amount': hex(transaction.amount),
                     }
         raise TransactionNotFoundError(f"Transaction not found with ID {transaction_id}")

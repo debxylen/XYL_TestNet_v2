@@ -4,6 +4,7 @@ import os
 import logging
 import atexit
 import traceback
+from flask_cors import cross_origin
 from errors import *
 # Initialize Flask app and blockchain
 app = Flask(__name__)
@@ -135,6 +136,7 @@ def handle_get_transaction_receipt(data):
 
 
 @app.route('/rpc/', methods=['POST'])
+@cross_origin()
 def rpc():
     data = request.get_json()
     try:
@@ -162,6 +164,7 @@ def add_money():
 
 
 @app.route('/get_mining_job', methods=['GET'])
+@cross_origin()
 def get_mining_job():
     """Send a new mining job to the miner."""
     job = blockchain.generate_mining_job()
@@ -169,6 +172,7 @@ def get_mining_job():
 
 
 @app.route('/submit_mined_block', methods=['POST'])
+@cross_origin()
 def submit_mined_block():
     """Receive a mined block from a miner and validate it."""
     data = request.json
@@ -192,4 +196,4 @@ def submit_mined_block():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=8080, threaded=True)
