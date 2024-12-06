@@ -182,6 +182,7 @@ def submit_mined_block():
 
     mined_block = {
         'index': block_data['index'],
+        'hash': block_data['hash'],
         'previous_hash': block_data['previous_hash'],
         'transactions': block_data['transactions'],
         'nonce': miner_nonce,

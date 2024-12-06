@@ -34,6 +34,7 @@ class Blockchain:
         print("NetMiner Balance: ", self.balances.get('network_miner',0), "aka", self.balances.get('network_miner',0)/(10**18))
         self.state = {} 
         self.event_log = []
+        self.mining_times =  {}
         
     def get_state(self):
         """Return the current state of the blockchain."""
@@ -85,17 +86,44 @@ class Blockchain:
         """Retrieve the balance of the given address."""
         return int(self.balances.get(address.lower(), 0))  # Return 0 if address has no balance
 
+    def get_latest_block_times(self, num_blocks=3):
+        """Get the start and end times for the latest blocks."""
+        # Get the last 'num_blocks' blocks and check if their times are recorded
+        latest_blocks = list(self.mining_times.items())[-num_blocks:]
+        valid_blocks = []
+        
+        for block_id, times in latest_blocks:
+            if times.get("start") is not None and times.get("end") is not None:
+                valid_blocks.append(times)
+        
+        return valid_blocks
+
     def adjust_difficulty(self):
-        if len(self.chain) < 2:
-            self.difficulty = 4
+        """Adjust the difficulty based on mining times."""
+        # Get the latest blocks' mining times (e.g., last 3 blocks)
+        recent_blocks = self.get_latest_block_times(num_blocks=3)
+        
+        if len(recent_blocks) < 2:
+            print("Not enough blocks with recorded times. Setting difficulty to default.")
+            self.difficulty = 4  # Set to default difficulty if not enough blocks
             return self.difficulty
-        times = [block.timestamp - self.chain[i-1].timestamp for i, block in enumerate(self.chain[1:], 1)]
-        avg_time = sum(times) / len(times)
+
+        # Calculate the average mining time for the recent blocks
+        avg_time = sum([block["end"] - block["start"] for block in recent_blocks]) / len(recent_blocks)
+        print(f"Average mining time for recent blocks: {avg_time:.2f} seconds.")
+
+        # Adjust difficulty based on the average mining time
         if avg_time < 2:
-            self.difficulty += 1
+            self.difficulty += 1  # Increase difficulty if mining was too fast
+            print(f"Block mined too quickly ({avg_time:.2f}s), increasing difficulty to {self.difficulty}.")
         elif avg_time > 5:
-            self.difficulty -= 1
+            self.difficulty -= 1  # Decrease difficulty if mining was too slow
+            print(f"Block mined too slowly ({avg_time:.2f}s), decreasing difficulty to {self.difficulty}.")
+
+        # Ensure difficulty stays within bounds
+        self.difficulty = max(2, self.difficulty)
         return self.difficulty
+
 
     def generate_mining_job(self):
         if not len(self.unconfirmed_transactions) > 0:
@@ -105,9 +133,11 @@ class Blockchain:
         job = {
             "index": last_block.index + 1,
             "previous_hash": last_block.hash,
-            "difficulty": self.adjust_difficulty(),
+            "difficulty": self.difficulty,
             "transactions": [self.unconfirmed_transactions[0].__json__()],
         }
+        self.mining_times[str(job['index'])] = {} #initialise a dictionary, key as the index
+        self.mining_times[str(job['index'])]['start'] = time.time() #generated job at time
         self.unconfirmed_transactions.pop(0)
         return job
 
@@ -119,6 +149,8 @@ class Blockchain:
         target = '0' * block['difficulty']  # difficulty: leading zeros in the hash
         block_header = f"{block['previous_hash']}{json.dumps(txs)}{miner_nonce}"
         block_hash = hashlib.sha256(block_header.encode()).hexdigest()
+        if not block['hash'] == block_hash:
+            return False, block_hash
         # Check if the block hash already exists in the chain
         for block in self.chain:
             if block.hash == block_hash:
@@ -128,6 +160,8 @@ class Blockchain:
       
     def submit_mined_block(self, mined_block, miner):
         """Add a mined block to the blockchain."""
+        self.mining_times[str(mined_block['index'])]['end'] = time.time()
+        self.adjust_difficulty()
         valid, block_hash = self.validate_mined_block(mined_block, mined_block['nonce'])
         if valid:
             trxs = []
@@ -190,6 +224,8 @@ class Blockchain:
     def send_raw_transaction(self, raw_transaction):
         try:
             tx_dict = tx_decode(raw_transaction)
+            if not int(tx_dict['chainId']) == 6934:
+                return {"data": f"Invalid transaction: chainId {tx_dict['chainId']} doesn't match 6934."}
             verif = verify_sign(tx_dict)
             if not verif[0]:
                 return {'data': 'Invalid transaction.'}
