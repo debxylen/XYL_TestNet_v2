@@ -126,20 +126,29 @@ class Blockchain:
 
 
     def generate_mining_job(self):
-        if not len(self.unconfirmed_transactions) > 0:
-            return 'NO_JOB'
         """Generate a new mining job."""
+        if len(self.unconfirmed_transactions) == 0:
+            return 'NO_JOB'
+
         last_block = self.get_last_block()
+        # Limit to 5 transactions per mining job
+        transactions_to_mine = self.unconfirmed_transactions[:5]
+
         job = {
             "index": last_block.index + 1,
             "previous_hash": last_block.hash,
             "difficulty": self.difficulty,
-            "transactions": [self.unconfirmed_transactions[0].__json__()],
+            "transactions": [utdict.__json__() for utdict in transactions_to_mine],
         }
-        self.mining_times[str(job['index'])] = {} #initialise a dictionary, key as the index
-        self.mining_times[str(job['index'])]['start'] = time.time() #generated job at time
-        self.unconfirmed_transactions.pop(0)
+
+        self.mining_times[str(job['index'])] = {}  # Initialize dictionary with key as the index
+        self.mining_times[str(job['index'])]['start'] = time.time()  # Record job generation time
+
+        # Remove only the transactions included in this job from the pool
+        self.unconfirmed_transactions = self.unconfirmed_transactions[5:]
+
         return job
+
 
     def validate_mined_block(self, block, miner_nonce):
         """Validate the mined block."""
@@ -162,18 +171,40 @@ class Blockchain:
         """Add a mined block to the blockchain."""
         self.mining_times[str(mined_block['index'])]['end'] = time.time()
         self.adjust_difficulty()
+
+        # Validate the mined block
         valid, block_hash = self.validate_mined_block(mined_block, mined_block['nonce'])
         if valid:
             trxs = []
-            for t in mined_block['transactions']:
-                trxs.append(tx_from_json(t))
-            
             miner = miner.lower()
-            sender = mined_block['transactions'][0]['sender'].lower()
-            recipient = mined_block['transactions'][0]['recipient'].lower()
-            amount = int(mined_block['transactions'][0]['amount'])
-            trxs.append(Transaction('network', miner, amount))
-            # Add the block to the chain
+            total_gas_collected = 0
+
+            # Set the transaction limit (e.g., 5 transactions per block)
+            MAX_TRANSACTIONS = 100
+            if len(mined_block['transactions']) > MAX_TRANSACTIONS:
+                print(f"Rejected block: contains more than {MAX_TRANSACTIONS} transactions")
+                return None
+
+            # Process each transaction in the mined block
+            for tx_data in mined_block['transactions']:
+                tx = tx_from_json(tx_data)
+                trxs.append(tx)
+
+                sender = tx.sender.lower()
+                recipient = tx.recipient.lower()
+                amount = int(tx.amount)
+
+                # Gas calculations
+                amt = find_actual_amount(amount, 0.003469)
+                self.update_balance(sender, -amt)  # Deduct amount (including gas) from sender
+                self.update_balance(recipient, amount)  # Add amount to recipient (after gas)
+                self.update_balance('network', 0.002400 * amt)  # Add gas to network
+                total_gas_collected += 0.001069 * amt  # Accumulate gas for miner reward
+
+            # Add miner reward transaction
+            trxs.append(Transaction('network', miner, total_gas_collected))
+
+            # Create and append the new block
             new_block = Block(
                 index=mined_block['index'],
                 previous_hash=mined_block['previous_hash'],
@@ -182,19 +213,22 @@ class Blockchain:
             )
             new_block.hash = block_hash
             self.chain.append(new_block)
-            self.unconfirmed_transactions = []  # Clear unconfirmed transactions
-            amt = find_actual_amount(amount, 0.003469)
-            self.update_balance(sender, -amt)  # Deduct amount (including gas) from sender
-            self.update_balance(recipient, amount)  # Add amount to recipient (after gas) (total - gas)
-            self.update_balance('network', 0.002400*amt)  # Give some gas to network (total*0.002400)
-            self.update_balance(miner, 0.001069*amt)  # Add miner reward from gas (total*001069)
 
+            # Clear unconfirmed transactions that were processed
+            self.unconfirmed_transactions = [
+                tx for tx in self.unconfirmed_transactions
+                if tx.hash not in [tx.hash for tx in trxs]
+            ]
+
+            # Save chain and balances
             self.save_chain()
             self.save_balances()
+
             return new_block
         else:
             print(f'Rejected block {block_hash}')
             return None
+
 
     def get_transaction_by_hash(self, tx_hash):
         """Retrieve a transaction by its hash."""
@@ -310,3 +344,4 @@ class Blockchain:
                         'amount': hex(transaction.amount),
                     }
         raise TransactionNotFoundError(f"Transaction not found with ID {transaction_id}")
+
