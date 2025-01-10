@@ -13,3 +13,8 @@ def find_actual_amount(y: int, gas: int):
     multiplier = 1 - gas
     x = y / multiplier
     return x
+
+def round_to_valid_amount(amount):
+    # Round the amount to the nearest valid value (1 million wei in this case)
+    valid_amount = 1000000
+    return (amount // valid_amount) * valid_amount

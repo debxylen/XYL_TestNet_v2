@@ -4,11 +4,12 @@ import os
 import logging
 import atexit
 import traceback
-from flask_cors import cross_origin
+from flask_cors import CORS, cross_origin
 from errors import *
 # Initialize Flask app and blockchain
 app = Flask(__name__)
 blockchain = Blockchain()
+CORS(app, origins="*")
 
 # Disable Flask default logging
 log = logging.getLogger('werkzeug')
@@ -26,6 +27,7 @@ CHAIN_ID = 6934  # Set your chain ID here
 
 
 @app.route('/', methods=['GET', 'POST'])
+@cross_origin()
 def home():
     return "XYL TestNet is alive and working properly."
 
@@ -66,16 +68,19 @@ def handle_rpc(data):
         return handle_send_raw_transaction(data)
 
     if method == 'net_version':
-        return jsonify({'jsonrpc': '2.0', 'result': "2", 'id': data.get('id')})
+        return jsonify({'jsonrpc': '2.0', 'result': hex(CHAIN_ID), 'id': data.get('id')})
 
     if method == 'eth_getTransactionReceipt':
         return handle_get_transaction_receipt(data)
 
-    return jsonify({'jsonrpc': '2.0', 'error': 'Method not found', 'id': data.get('id')})
+    return jsonify({'jsonrpc': '2.0', 'error': {'code': -32601, 'message': 'Method not found'}, 'id': data.get('id')})
 
 
 def handle_get_block_by_number(data):
-    block_number = int(data.get('params')[0], 16)
+    if 'latest' in data.get('params')[0]:
+        block_number = len(blockchain.chain)
+    else:
+        block_number = int(data.get('params')[0], 16)
     if block_number >= len(blockchain.chain):
         return jsonify({'jsonrpc': '2.0', 'result': None, 'id': data.get('id')})
     return jsonify({'jsonrpc': '2.0', 'result': blockchain.chain[block_number].__json__(), 'id': data.get('id')})
@@ -123,10 +128,10 @@ def handle_send_raw_transaction(data):
         return jsonify({'jsonrpc': '2.0', 'result': block_number["blockNumber"], 'id': data.get('id')})
     if "result" in block_number:
         return jsonify({'jsonrpc': '2.0', 'result': block_number["result"], 'id': data.get('id')})
-    if "result" in block_number:
-        return jsonify({'jsonrpc': '2.0', 'result': block_number["error"], 'id': data.get('id')})
+    if "error" in block_number:
+        return jsonify({'jsonrpc': '2.0', 'error': {'code': -32603, 'message': block_number["error"]}, 'id': data.get('id')})
     else:
-        return jsonify({'jsonrpc': '2.0', 'error': {'code': -32603, 'message': 'Internal error'}, 'id': data.get('id')})
+        return jsonify({'jsonrpc': '2.0', 'error': {'code': -32603, 'message': 'Internal error: No result was returned by internal function.'}, 'id': data.get('id')})
 
 
 def handle_get_transaction_receipt(data):
@@ -142,10 +147,12 @@ def rpc():
     try:
         return handle_rpc(data)
     except Exception as e:
-        return jsonify({'jsonrpc': '2.0', 'error': str(e), 'id': data.get('id')})
+        print(traceback.format_exc())
+        return jsonify({'jsonrpc': '2.0', 'error':  {'code': -32603, 'message': f"Error while handling RPC: {str(e)}"}, 'id': data.get('id')})
 
 
 @app.route('/admin/add_balance', methods=['POST'])
+@cross_origin()
 def add_money():
     data = request.get_json()
     sender = data.get('sender')
@@ -158,7 +165,8 @@ def add_money():
 
     if not sender or not recipient or not amount:
         return jsonify({"message": "Invalid input. Sender, recipient, and amount are required.", "status": "error"}), 400
-
+    
+    print(f"Faucet from {request.remote_addr}: From {sender} to {recipient}, value: {round(amount/(10**18), 2)}")
     result = blockchain.add_transaction(sender, recipient, amount)
     return jsonify({"message": "Transaction recorded and waiting to be mined.", "status": "success"}), 200
 
@@ -189,11 +197,11 @@ def submit_mined_block():
         'difficulty': block_data['difficulty']
     }
 
-    result = blockchain.submit_mined_block(mined_block, miner_address)
+    result, reason = blockchain.submit_mined_block(mined_block, miner_address)
     if result:
         return jsonify({'message': 'Block accepted.'}), 200
     else:
-        return jsonify({'message': 'Block rejected.'}), 400
+        return jsonify({'message': f'Block rejected: {reason}'}), 400
 
 
 if __name__ == '__main__':

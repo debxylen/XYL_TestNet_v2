@@ -3,6 +3,7 @@ import json
 import time
 import os
 import pickle
+from pymongo.mongo_client import MongoClient
 from tx_decode import tx_decode
 from crypt_util import ep_save, ep_load
 from block import Block
@@ -15,17 +16,23 @@ from utils import *
 from errors import *
 load_dotenv()
 
+db_pass = os.getenv("DB_PASSWORD")
+mongo_url = f"mongodb+srv://priyanshudeb3:{db_pass}@maincluster.g1xdb.mongodb.net/?retryWrites=true&w=majority&appName=MainCluster"
+
 class Blockchain:
     def __init__(self):
+        self.mongo_client = MongoClient(mongo_url)
+        self.db = self.mongo_client['XYL_TestNet']
         self.chain = []
         self.unconfirmed_transactions = []
         self.balances = {}
         self.u = (10**18)
         self.difficulty = 4
         self.contract_manager = ContractManager(self)  
-        self.create_genesis_block()
         if os.path.exists('blockchain'):
             self.load_chain()
+        else:
+            self.create_genesis_block()
         if os.path.exists('balances'):
             self.load_balances()
         if os.path.exists('contract_manager'):
@@ -43,40 +50,29 @@ class Blockchain:
     def update_state(self, contract_address, method_name, result):
         """Update the blockchain state with the result of a smart contract method execution."""
         contract_address = str(contract_address).lower()
-        if contract_address not in self.balances:
-            self.balances[contract_address] = {}  # Initialize contract state if not exists
-        self.balances[contract_address][method_name] = result
-        self.save_balances()  # Ensure state is saved after update
+        if contract_address not in self.state:
+            self.state[contract_address] = {}  # Initialize contract state if not exists
+        self.state[contract_address][method_name] = result
         
     def create_genesis_block(self):
         """Generate the first block in the blockchain (the Genesis block)."""
         genesis_block = Block(0, "0", [], 0)
         genesis_block.hash = genesis_block.compute_hash()  # Compute the hash of the genesis block
         self.chain.append(genesis_block)  # Add it to the chain
+        self.db['chain'].insert_one(genesis_block.__json__())
 
-    def add_transaction(self, sender, recipient, amount: int):
+    def add_transaction(self, sender, recipient, amount: int, nonce = None):
         """Add a new transaction to the list of unconfirmed transactions."""
         sender = sender.lower()
         recipient = recipient.lower()
         amount = int(amount)
-        transaction = Transaction(sender, recipient, amount)
+        if nonce == None:
+            nonce = self.get_transaction_count(sender)
+        transaction = Transaction(sender, recipient, amount, nonce)
         if transaction.is_valid(sender_balance=self.get_balance(sender)):
             self.unconfirmed_transactions.append(transaction)
         else:
             raise InsufficientBalanceError(f"Insufficient funds for transaction: {sender} has {self.get_balance(sender)} but needs {amount}")
-            
-    def create_new_block(self, transactions=None):
-        """Create and add a new block with the current unconfirmed transactions."""
-        last_block = self.get_last_block()
-        new_block = Block(
-            index=last_block.index + 1,
-            previous_hash=last_block.hash,
-            transactions=transactions if transactions else self.unconfirmed_transactions,
-            nonce=0  # The miner will find the nonce
-        )
-        new_block.hash = new_block.compute_hash()
-        self.chain.append(new_block)
-        self.unconfirmed_transactions = []
 
     def get_last_block(self):
         """Retrieve the most recent block in the chain."""
@@ -131,8 +127,8 @@ class Blockchain:
             return 'NO_JOB'
 
         last_block = self.get_last_block()
-        # Limit to 5 transactions per mining job
-        transactions_to_mine = self.unconfirmed_transactions[:5]
+
+        transactions_to_mine = self.unconfirmed_transactions[:10]
 
         job = {
             "index": last_block.index + 1,
@@ -145,27 +141,37 @@ class Blockchain:
         self.mining_times[str(job['index'])]['start'] = time.time()  # Record job generation time
 
         # Remove only the transactions included in this job from the pool
-        self.unconfirmed_transactions = self.unconfirmed_transactions[5:]
+        # self.unconfirmed_transactions = self.unconfirmed_transactions[10:]
 
         return job
 
-
     def validate_mined_block(self, block, miner_nonce):
         """Validate the mined block."""
+        V1 = block['index'] == self.chain[-1].index + 1
+        V2 = block['previous_hash'] == self.chain[-1].hash
+
+        if not (V1 and V2):
+            return False, block['hash'], "Block already mined."
+
         txs = []
         for i in block['transactions']:
             txs.append(i)
         target = '0' * block['difficulty']  # difficulty: leading zeros in the hash
         block_header = f"{block['previous_hash']}{json.dumps(txs)}{miner_nonce}"
-        block_hash = hashlib.sha256(block_header.encode()).hexdigest()
+
+        # Use hashlib.blake2b for hashing
+        block_hash = hashlib.blake2b(block_header.encode(), digest_size=64).hexdigest()
+
         if not block['hash'] == block_hash:
-            return False, block_hash
+            return False, block_hash, f"Given hash doesn't match expected hash for nonce {miner_nonce}."
+
         # Check if the block hash already exists in the chain
-        for block in self.chain:
-            if block.hash == block_hash:
-                print(f"Duplicate block hash found: {block_hash}")
-                return False, block_hash
-        return str(block_hash).startswith(target), block_hash      
+        for chain_block in self.chain:
+            if chain_block.hash == block_hash:
+                return False, block_hash, f"Duplicate block hash found: {block_hash}"
+
+        return block_hash.startswith(target), block_hash, "Block is valid."
+
       
     def submit_mined_block(self, mined_block, miner):
         """Add a mined block to the blockchain."""
@@ -173,14 +179,14 @@ class Blockchain:
         self.adjust_difficulty()
 
         # Validate the mined block
-        valid, block_hash = self.validate_mined_block(mined_block, mined_block['nonce'])
+        valid, block_hash, reason = self.validate_mined_block(mined_block, mined_block['nonce'])
         if valid:
             trxs = []
             miner = miner.lower()
             total_gas_collected = 0
 
             # Set the transaction limit (e.g., 5 transactions per block)
-            MAX_TRANSACTIONS = 100
+            MAX_TRANSACTIONS = 10 
             if len(mined_block['transactions']) > MAX_TRANSACTIONS:
                 print(f"Rejected block: contains more than {MAX_TRANSACTIONS} transactions")
                 return None
@@ -188,21 +194,50 @@ class Blockchain:
             # Process each transaction in the mined block
             for tx_data in mined_block['transactions']:
                 tx = tx_from_json(tx_data)
-                trxs.append(tx)
 
                 sender = tx.sender.lower()
                 recipient = tx.recipient.lower()
                 amount = int(tx.amount)
 
+                try: # clear processed tx before +/- the stuff
+                    for unconfirmed_tx in self.unconfirmed_transactions:
+                        if unconfirmed_tx.tx_hash == tx.tx_hash:
+                            self.unconfirmed_transactions.remove(unconfirmed_tx)
+                    # self.unconfirmed_transactions.remove(tx)
+                    # print("Removed transaction from unconfirmed list: ", tx.tx_hash)
+                except ValueError: # if it couldnt be removed from unconfirmed txs, means its already mined and added, so dont add again
+                    # print(f"Transaction already mined: {tx.tx_hash}")
+                    continue # move to next transaction
+                
                 # Gas calculations
-                amt = find_actual_amount(amount, 0.003469)
-                self.update_balance(sender, -amt)  # Deduct amount (including gas) from sender
-                self.update_balance(recipient, amount)  # Add amount to recipient (after gas)
-                self.update_balance('network', 0.002400 * amt)  # Add gas to network
-                total_gas_collected += 0.001069 * amt  # Accumulate gas for miner reward
+                if amount == 0:
+                    print(f"0 transaction found: {tx}")
+                    amt = find_actual_amount(amount, 0.003469)
+                    if self.get_balance(sender) < 0.003469:  # Ensure sender can afford base gas fee
+                        print(f"Rejected transaction with hash {tx.tx_hash}: Not enough balance.")
+                        continue  # Skip this transaction, do not add to the block
+                    self.update_balance(sender, -0.003469)  # base fee to discourage 0-tx
+                    self.update_balance(recipient, 0)  # 0 value tx so recipient gets none
+                    self.update_balance('network', 0.001400)  # Add gas to network
+                    total_gas_collected += 0.002069  # Accumulate gas for miner reward
+                else:
+                    # Gas calculations
+                    amt = find_actual_amount(amount, 0.003469)
+                    if self.get_balance(sender) < amt:  # Ensure sender can afford gas fee + amount to send
+                        print(f"Rejected transaction with hash {tx.tx_hash}: Not enough balance.")
+                        continue  # Skip this transaction, do not add to the block
+                    self.update_balance(sender, -amt)  # Deduct amount (including gas) from sender
+                    self.update_balance(recipient, amount)  # Add amount to recipient (after gas)
+                    self.update_balance('network', 0.001400 * amt)  # Add gas to network
+                    total_gas_collected += 0.002069 * amt  # Accumulate gas for miner reward
+                    
+                trxs.append(tx) # append to txrs once all +/- is done
+                
+            if not (len(trxs) > 0):
+                return None, "No transactions were added to chain, either because all of them are already mined, or are invalid."
 
             # Add miner reward transaction
-            trxs.append(Transaction('network', miner, total_gas_collected))
+            trxs.append(Transaction('network', miner, total_gas_collected, 0))
 
             # Create and append the new block
             new_block = Block(
@@ -213,21 +248,24 @@ class Blockchain:
             )
             new_block.hash = block_hash
             self.chain.append(new_block)
+            new_block_for_db = new_block.__json__()
+            for dbtx in new_block_for_db['transactions']:
+                dbtx['amount'] = str(dbtx['amount'])
+            self.db['chain'].insert_one(new_block_for_db)
 
             # Clear unconfirmed transactions that were processed
-            self.unconfirmed_transactions = [
-                tx for tx in self.unconfirmed_transactions
-                if tx.hash not in [tx.hash for tx in trxs]
-            ]
+            # self.unconfirmed_transactions = [
+            #    tx for tx in self.unconfirmed_transactions
+            #    if tx.hash not in [tx.hash for tx in trxs]
+            # ]
 
             # Save chain and balances
             self.save_chain()
             self.save_balances()
 
-            return new_block
+            return new_block, "Block accepted and added to chain."
         else:
-            print(f'Rejected block {block_hash}')
-            return None
+            return None, f'Rejected block {block_hash}: {reason}'
 
 
     def get_transaction_by_hash(self, tx_hash):
@@ -254,23 +292,67 @@ class Blockchain:
             self.balances[address] += amount
         else:
             self.balances[address] = amount
-    
+        self.db['balances'].update_one(
+            {"address": address},  # Query: Find the document for the address
+            {"$set": {"balance": str(self.balances[address])}},  # Sync with balance in blockchain
+            upsert=True  # Create a new document if it doesn't exist
+        )
+
+    def find_pending(self, sender, nonce):
+        for tx in self.unconfirmed_transactions:
+            if tx.sender.lower() == sender.lower() and int(tx.nonce) == int(nonce):
+                return tx
+        return None
+
     def send_raw_transaction(self, raw_transaction):
         try:
             tx_dict = tx_decode(raw_transaction)
-            if not int(tx_dict['chainId']) == 6934:
-                return {"data": f"Invalid transaction: chainId {tx_dict['chainId']} doesn't match 6934."}
-            verif = verify_sign(tx_dict)
-            if not verif[0]:
-                return {'data': 'Invalid transaction.'}
 
+            if not int(tx_dict['chainId']) == 6934:
+                return {"error": f"Invalid transaction: chainId {tx_dict['chainId']} doesn't match 6934."}
+
+            if (tx_dict['gas'] < tx_dict['value']*0.003469) or (tx_dict['gasPrice']!=1):
+                return {'error': 'Invalid gas values provided.'}
+
+            if int(tx_dict['value']) < 1000000 and int(tx_dict['value']) != 0:
+                return {'error': f"Rejected transaction: Minimum transaction amount is 1,000,000 wxei for non-zero transactions."}              
+
+            verif = verify_sign(tx_dict) # makes sure that its signed by the sender by reconstructing address and comparing with given address
+            if not verif[0]:
+                return {'error': 'Invalid transaction.'}
             sender = verif[-1]
-            amount = int(tx_dict['value'])
-            recipient = tx_dict['to']
+            amount = round_to_valid_amount(int(tx_dict['value']))
+            amount = amount - (amount*0.003469)
+            nonce = int(tx_dict['nonce'])
+            recipient = tx_dict['to']              
+
+            if not nonce == self.get_transaction_count(sender.lower()):
+                return {'error': 'Invalid nonce provided.'}
+
+            if self.get_balance(sender) < find_actual_amount(amount, 0.003469):  # Ensure sender can afford gas fee as well as sending value
+                return {'error': f"Rejected transaction: Not enough balance."}
+
+            if self.get_balance(sender) < 0.003469: # ensuring enough balance for gas to avoid problems later
+                return {'error': f'Not enough balance to pay for gas: 0.003469 is the minimum total gas cost, sender has {self.get_balance(sender)}'}
+
+            if amount == 0 and sender.lower() == recipient.lower(): # cancel tx
+                to_cancel = self.find_pending(sender, nonce) # tx to cancel
+                if to_cancel: # if there is a cancellable one
+                    try:
+                        self.unconfirmed_transactions.remove(to_cancel) # remove from unconfirmed tx
+                    except ValueError:
+                        return {'error': 'Transaction not found or already mined.'} # checked again, if it couldnt be removed due to tx not being in unconfrmed list, means its mined in meantime, so dont proceed
+                    self.add_transaction(sender, sender, 0, nonce) # add the transaction with same sender and recipient, 0 amt, and given nonce
+                    return {
+                        'blockNumber': len(self.chain),
+                        'transactionHash': hashlib.sha256(raw_transaction.encode()).hexdigest()
+                    }
+                return {'error': 'Transaction not found or already mined.'}
 
             if len(tx_dict.get('data'))>0 and str(recipient)=='None':  # Contract deployment with compiled bytecode
                 c_code = tx_dict["data"]
                 contract_address = SmartContract(self, sender, c_code).address
+                self.db['contracts'].insert_one({"contract_address": contract_address.lower(), "code": c_code, "owner": sender.lower()})
                 print(f"[LOG] Contract Creation: {contract_address}")
                 return {"contractAddress": contract_address}
 
@@ -282,7 +364,7 @@ class Blockchain:
                 return response
 
             # Regular transaction
-            self.add_transaction(sender, recipient, amount)
+            self.add_transaction(sender, recipient, amount, nonce)
             return {
                 'blockNumber': len(self.chain),
                 'transactionHash': hashlib.sha256(raw_transaction.encode()).hexdigest()
@@ -305,13 +387,65 @@ class Blockchain:
         ep_save(self.balances, 'balances', os.getenv("KEY"))
 
     def load_balances(self):
-        self.balances = ep_load('balances', os.getenv("KEY"))
-
+        try:
+            balances = {}
+            bals = self.db['balances'].find().sort("address", 1)
+            for i in bals:
+                address = i.get("address")
+                amount = i.get("amount")
+                try:
+                    balances[address.lower()] = int(float(amount))
+                except:
+                    balances[address.lower()] = float(amount)
+            self.balances = balances
+            print("Loaded balances from cloud database.")
+        except:
+            print(traceback.format_exc())
+            self.balances = ep_load('balances', os.getenv("KEY"))
+            print("Couldn't load balances from cloud, loaded from local file. ")
+            
     def save_chain(self):
         ep_save(self.chain, 'blockchain', os.getenv("KEY"))
 
     def load_chain(self):
-        self.chain = ep_load('blockchain', os.getenv("KEY"))
+        # Get all entries from the collection
+        try:
+            entries = self.db['chain'].find().sort("index", 1)
+
+            # List to store Block objects
+            blocks = []
+
+            # Loop through each entry in the collection
+            for entry in entries:
+                
+                # Extract necessary fields for Block initialization
+                index = entry.get("index")
+                previous_hash = entry.get("previous_hash")
+                ttransactions = entry.get("transactions")
+                transactions = []
+                for tx in ttransactions:
+                    transactions.append(tx_from_json(tx))
+                nonce = entry.get("nonce")
+                
+                # Initialize Block object
+                block = Block(index=index, 
+                              previous_hash=previous_hash, 
+                              transactions=transactions, 
+                              nonce=nonce)
+                block.timestamp = entry.get("timestamp")
+                block.merkle_root = entry.get("merkle_root")
+                block.hash = entry.get("hash")
+                
+                # Append the Block object to the list
+                blocks.append(block)
+                
+            self.chain = blocks
+            print("Loaded blockchain from cloud database.")
+
+        except:
+            print(traceback.format_exc())
+            self.chain = ep_load('blockchain', os.getenv("KEY"))
+            print("Couldn't load blockchain from cloud, loaded from local file. ")
 
     def save_contracts(self):
         ep_save(self.contract_manager, 'contract_manager', os.getenv('CONTRACT_KEY'))

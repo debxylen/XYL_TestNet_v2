@@ -103,25 +103,28 @@ class SmartContract:
             method_name, args = hex_to_string(data).split("|XYL|")
             args = json.loads(args)
         except (ValueError, json.JSONDecodeError) as e:
-            raise InvalidExecutionData("Failed to parse execution data.") from e
+            return {"error": f"InvalidExecutionData: Failed to parse execution data: {str(e)}"}
 
         if self.locked and caller != self.owner:
-            raise ContractLockedError("Contract is locked, and only the owner can execute methods.")
+            return {"error": "ContractLockedError: Contract is locked, and only the owner can execute methods."}
 
         if method_name in self.native_methods:
-            if method_name == "xyl_destroy":
-                return self.destroy(caller)
-            elif method_name == "xyl_transferOwner":
-                return self.transfer_ownership(args['newOwner'], caller)
-            elif method_name == "xyl_getInfo":
-                return self.get_contract_info()
-            elif method_name == "xyl_lock":
-                return self.lock(caller)
-            elif method_name == "xyl_unlock":
-                return self.unlock(caller)
+            try:
+                if method_name == "xyl_destroy":
+                    return self.destroy(caller)
+                elif method_name == "xyl_transferOwner":
+                    return self.transfer_ownership(args['newOwner'], caller)
+                elif method_name == "xyl_getInfo":
+                    return self.get_contract_info()
+                elif method_name == "xyl_lock":
+                    return self.lock(caller)
+                elif method_name == "xyl_unlock":
+                    return self.unlock(caller)
+            except Exception as e:
+                return {"error": "Error while calling native method: {e}"}
 
         if method_name not in self.methods:
-            raise MethodNotFoundError(f"Method '{method_name}' not found in contract.")
+            return {"error": f"MethodNotFoundError: Method '{method_name}' not found in contract."}
 
         instructions = self.methods[method_name]
         stack = []
@@ -199,7 +202,7 @@ class SmartContract:
 
             return {"result": "Execution successful", "state": self.state}
         except Exception as e:
-            raise ExecutionError(f"Execution failed: {str(e)}") from e
+            return {"error": f"ExecutionError: {str(e)}"}
 
 
 class ContractManager:
@@ -212,7 +215,7 @@ class ContractManager:
 
     def delete(self, c_address):
         if c_address not in self.contracts:
-            raise ContractNotFoundError(f"Contract at address {c_address} does not exist.")
+            return {"error": f"ContractNotFoundError: Contract at address {c_address} does not exist."}
         del self.contracts[c_address]
 
     def exists(self, c_address):

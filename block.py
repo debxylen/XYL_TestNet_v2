@@ -13,11 +13,11 @@ class Block:
         :param transactions: List of transactions included in the block.
         :param nonce: Nonce used for Proof of Work (default is 0).
         """
-        self.index = index
+        self.index = int(index)
         self.previous_hash = previous_hash
         self.timestamp = time.time()  # Current timestamp in seconds
         self.transactions = transactions  # List of transaction objects
-        self.nonce = nonce  # Used for Proof of Work
+        self.nonce = int(nonce)  # Used for Proof of Work
         self.merkle_root = self.compute_merkle_root()  # Root hash of transactions
         self.hash = self.compute_hash()  # Block hash
 
