@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+    <meta name="description" content="Official Documentation for XYL TestNet, an advanced blockchain test network with fast block times, smart contracts, and EVM compatibility.">
+    <meta name="keywords" content="Documentation, Docs, tutorial, guide, how to, Blockchain, TestNet, XYL, Cryptocurrency, Smart Contracts, EVM Compatibility, Ethereum, Crypto, EVM, Testnet, XYL Testnet, XYL Mainnet, XYL TestNet, XYL MainNet, XYL TestNet, XYL blockchain, testnet, blockchain testing, EVM compatibility, Ethereum testnet, cryptocurrency testnet, XYL Mainnet, dynamic gas pricing, custom Proof of Work, smart contract testing, decentralized apps, blockchain development, blockchain miner, XYL gas model, XYL mining, XYL explorer">
+    <meta property="og:title" content="XYL TestNet Docs">
+    <meta property="og:description" content="Official Documentation for XYL TestNet, an advanced blockchain test network with fast block times, smart contracts, and EVM compatibility.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/debxylen/XYL-Testnet/refs/heads/main/icon_t.png">
+    <meta property="og:url" content="https://debxylen.github.io/XYL_TestNet/docs.html">
+    <meta property="og:type" content="website">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "XYL TestNet Documentation",
+      "url": "https://debxylen.github.io/XYL_TestNet/docs.html",
+      "description": "Official Documentation for XYL TestNet, an advanced blockchain test network with fast block times, smart contracts, and EVM compatibility.",
+      "keywords": "Documentation, Docs, tutorial, guide, how to, Blockchain, TestNet, XYL, Cryptocurrency, Smart Contracts, EVM Compatibility, Ethereum, Crypto, EVM, Testnet, XYL Testnet, XYL Mainnet, XYL TestNet, XYL MainNet, XYL TestNet, XYL blockchain, testnet, blockchain testing, EVM compatibility, Ethereum testnet, cryptocurrency testnet, XYL Mainnet, dynamic gas pricing, custom Proof of Work, smart contract testing, decentralized apps, blockchain development, blockchain miner, XYL gas model, XYL mining, XYL explorer"
+    }
+    </script>
+    <title>XYL TestNet Documentation</title>
+    <style>
+        /* General Styling */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Poppins", sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            font-size: 1em;
+        }
+
+        /* Layout Styling */
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 250px;
+            background-color: #fff;
+            border-right: 1px solid #ddd;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar h2 {
+            color: #007acc;
+            margin-top: 10vh;
+            font-size: 2em;
+        }
+
+        .sidebar a {
+            display: block;
+            color: #007acc;
+            text-decoration: none;
+            margin: 10px 0;
+            font-size: 1em;
+        }
+
+        .sidebar a:hover {
+            text-decoration: underline;
+        }
+
+        a {
+            color: #007acc;
+            text-decoration: none;
+            font-size: 1em;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Main Content Styling */
+        .content {
+            margin-top: 5vh;
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .content section {
+            margin-bottom: 40px;
+        }
+
+        .content h2 {
+            color: #007acc;
+            margin-bottom: 10px;
+        }
+
+        .content p,
+        li {
+            margin-bottom: 1em;
+        }
+
+        .content ol,
+        ul {
+            padding-left: 20px;
+        }
+
+        .cta-button {
+            background-color: #1e90ff;
+            color: #ffffff;
+            padding: 14px 30px;
+            font-size: 1.4rem;
+            border-radius: 50px;
+            text-decoration: none;
+            text-transform: uppercase;
+            transition: background-color 0.3s;
+        }
+
+        .cta-button:hover {
+            background-color: #004c8c;
+        }
+
+        /* Footer Styling */
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #f1f1f1;
+            color: #666;
+            border-top: 1px solid #ddd;
+        }
+
+        /* Smooth Scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Navbar Styling */
+        nav {
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+            position: absolute;
+            top: 0;
+            width: 100%;
+            padding: 10px 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        nav a {
+            color: #007acc;
+            text-decoration: none;
+            margin-left: 15px;
+            font-size: 1em;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .navlinks {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #nav_head {
+            margin: 0;
+            margin-right: 60vw;
+        }
+
+        /* Media Query for Small Screens */
+        @media (max-width: 768px) {
+            #nav_head {
+                font-size: 1em;
+                margin-right: 0;
+            }
+
+            .navlinks {
+                display: none;
+                font-size: 0.8em;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .content {
+                margin-top: 1vh;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav>
+        <h1 id="nav_head">XYL TestNet Docs</h1>
+        <div class="navlinks">
+            <a href="index.html">Homepage</a>
+            <a href="https://debxylen.github.io/BlockExplorer/">Block Explorer</a>
+            <a href="https://github.com/debxylen/XYL-TestMiner">Miner</a>
+            <a href="faucet.html">Faucet</a>
+        </div>
+    </nav>
+    <!-- Main Layout -->
+    <div class="container">
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <h2>XYL Docs</h2>
+            <a href="#introduction">Introduction</a>
+            <a>Getting Started:</a>
+            <ul>
+                <a href="#setup">Setup</a>
+                <a href="#faucet">Receiving Test Tokens</a>
+                <a href="#mining">Mining</a>
+            </ul>
+            <a href="#tokenomics-gas">Tokenomics and Gas</a>
+            <a href="#rpc-methods">Supported RPC Methods</a>
+            <a href="#faq">FAQ and About the TestNet</a>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+
+            <section id="introduction">
+                <h2>Welcome to the official XYL TestNet documentation</h2>
+                <ul>
+                    <li><a href="#setup">Getting Started: Setup and Connection</a></li>
+                    <li><a href="#faucet">Getting Started: Receiving Test Tokens</a></li>
+                    <li><a href="#mining">Getting Started: Mining</a></li>
+                    <li><a href="#tokenomics-gas">Tokenomics and Gas</a></li>
+                    <li><a href="#rpc-methods">Supported RPC Methods</a></li>
+                    <li><a href="#faq">FAQ and About the TestNet</a></li>
+                </ul>
+            </section>
+
+            <section id="setup">
+                <h2>MetaMask Setup</h2>
+                <ul>
+                    <li><strong>Network Name:</strong> XYL TestNet</li>
+                    <li><strong>Default RPC URL:</strong> https://xyl-testnet.glitch.me/rpc/</li>
+                    <li><strong>Chain ID:</strong> 6934</li>
+                    <li><strong>Native Currency Symbol:</strong> XYL</li>
+                    <li><strong>Block Explorer URL:</strong> https://debxylen.github.io/BlockExplorer/</li>
+                </ul><br>
+                <p>Connect using <a href="https://chainid.network/chain/6934/" class="cta-button"
+                        style="font-size: 1rem;">chainid.network</a> or <a href="https://chainlist.org/chain/6934"
+                        class="cta-button" style="font-size: 1rem;">chainlist.org</a></p><br>
+                <h2>RPC Details</h2>
+                <p>Use the following RPC details to connect your application to the XYL TestNet:</p>
+                <ul>
+                    <li><strong>RPC URL:</strong> https://xyl-testnet.glitch.me/rpc/</li>
+                    <li><strong>Chain ID:</strong> 6934</li>
+                    <li><strong>Currency Symbol:</strong> XYL</li>
+                </ul>
+                <p>Use any EVM-compatible wallet or library (like Web3.js) to interact with the testnet.<br>You can also
+                    view Ethereum RPC 2.0 documentation for more details on how to interact with the RPC.</p>
+                <p>It is recommended to try using <b>xyl-client.py</b> if you are planning to interact with the testnet
+                    using Python. You can also use it even for any other EVM-compatible chain to an extent. </p>
+                <code>pip install xyl-client.py</code>
+            </section>
+
+            <section id="faucet">
+                <h2>Receiving Test Tokens: Faucets</h2>
+                <p>A faucet is an application that dispenses free tokens on a testnet. These tokens allow you to play
+                    around with the testnet without the risk of spending actual money or valuable coins.</p>
+                Official Faucets: <ul>
+                    <li><a href="faucet.html">XYL TestNet Faucet</a></li>
+                </ul>
+                <p>As of now, each person can claim 6 XYL per day.</p>
+            </section>
+
+            <section id="mining">
+                <h2>Mining: PoW Consensus</h2>
+                <p>Proof of work (PoW) is a consensus mechanism that validates transactions on blockchains and is used
+                    in many cryptocurrencies. PoW helps ensure that only legitimate transactions are recorded on the
+                    blockchain, by making it computationally expensive to attack or dominate the blockchain.</p>
+                <p>NOTE: Not to be confused with the Mining Act 1978 of Australia: Instead of miners solving
+                    cryptographic puzzles, they’re lodging paperwork and waiting for approval before disturbing the
+                    “blockchain of the Earth.” 😂</p>
+                Supported Mining Software: <ul>
+                    <li><a href="https://github.com/debxylen/XYL-TestMiner">XYL TestMiner</a></li>
+                </ul>
+                <h2>Why mine?</h2>
+                <p>Mining on blockchains yeilds passive rewards, all you need is a computer and some electricity. It not
+                    only helps keep the chain safer and less vulnerable to attacks, promoting decentralization, but also
+                    gives you a fair share of the gas fees spent in the transaction.</p>
+            </section>
+
+            <section id="tokenomics-gas">
+                <h2>Tokenomics and Gas</h2>
+
+                <b>Native Token: XYL (TestToken)</b>
+                <p><strong>Symbol:</strong> XYL</p>
+                <p>
+                    XYL is the native token of the network, used for:
+                <ul>
+                    <li>Paying transaction fees (gas).</li>
+                    <li>Incentivizing miners for block validation.</li>
+                    <li>Enabling smart contract deployment and execution.</li>
+                    <li>Supporting dApp ecosystem functionality.</li>
+                    <li>Incentivizing users in games and other platforms.</a>
+                </ul>
+                </p>
+                <p>The smallest denomination of XYL is <b>wxei</b>, = 10¹⁸th of a XYL. <em>equivalent to 'wei' in
+                        Ethereum</em></p>
+                <p><strong>Supply Model:</strong></p>
+                <ul>
+                    <li>Total Supply: 6,942,340 XYL</li>
+                </ul>
+
+                <h2>Gas Model</h2>
+                <p>Gas ensures secure and efficient operations on the XYL TestNet. It is used to:</p>
+                <ul>
+                    <li>Prevent spam transactions.</li>
+                    <li>Compensate miners for computational effort.</li>
+                    <li>Allocate resources efficiently.</li>
+                </ul>
+                <p><strong>Gas Fee Calculation:</strong></p>
+                <ul>
+                    <li>Gas is calculated based on the computational complexity or the transaction amount.</li>
+                    <li><code>Gas Units = (Transaction Amount in wxei i.e. amount in XYL × 10¹⁸) × 0.003469</code>,
+                    </li>
+                    <li><code>Gas Price per unit = 1 wxei</code>, </li>
+                    <li>Total estimated gas cost = 0.3469% of the transaction amount. </li>
+                </ul>
+
+                <h2>Transaction Fee Distribution</h2>
+                <p>Transaction fees are distributed as following:</p>
+                <ul>
+                    <li>For every 1 XYL in a transaction,</li>
+                    <li>Miner reward: 0.002069 XYL</li>
+                    <li>Network: 0.001400 XYL</li>
+                    <li>Miners earn 0.002069 XYL per validated transaction, with the remainder supporting network
+                        maintenance, such as, funding faucets, node maintenance, ...etc.</li>
+                </ul>
+
+                <h2>Example</h2>
+                <p>For a transaction of 50 XYL:</p>
+                <ul>
+                    <li><strong>Total Gas Fee:</strong> <code>50 × 0.003469 = 0.17345 XYL</code></li>
+                    <li><strong>Miner Reward:</strong> 0.10345 XYL</li>
+                    <li><strong>Network:</strong> 0.07 XYL</li>
+                </ul>
+            </section>
+
+            <section id="rpc-methods">
+                <h1>Supported RPC Methods</h1>
+
+                <b>Important: Params must always be passed as a list.<br>All integer/numberical values must be passed as
+                    hexadecimal unless specified.</b>
+                <h2>1. eth_chainId</h2>
+                <p><strong>Description:</strong> Returns the chain ID of the current network.</p>
+                <p><strong>Parameters:</strong> None</p>
+                <p><strong>Response:</strong> A hexadecimal string representing the chain ID.</p>
+
+                <h2>2. eth_blockNumber</h2>
+                <p><strong>Description:</strong> Returns the number of the latest block.</p>
+                <p><strong>Parameters:</strong> None</p>
+                <p><strong>Response:</strong> A hexadecimal string representing the latest block number.</p>
+
+                <h2>3. eth_getBlockByNumber</h2>
+                <p><strong>Description:</strong> Returns information about a block by its number.</p>
+                <p><strong>Parameters:</strong></p>
+                <ul>
+                    <li><strong>blockNumber</strong> (string): The block number (in hex, e.g., <code>0x1</code>).</li>
+                </ul>
+                <p><strong>Response:</strong> Block details including transactions.</p>
+
+                <h2>4. eth_getBalance</h2>
+                <p><strong>Description:</strong> Returns the balance of an account at a specific block.</p>
+                <p><strong>Parameters:</strong></p>
+                <ul>
+                    <li><strong>address</strong> (string): The Ethereum/EVM wallet address.</li>
+                </ul>
+                <p><strong>Response:</strong> The balance of the specified address in wxei (hexadecimal).</p>
+
+                <h2>5. eth_getTransactionByHash</h2>
+                <p><strong>Description:</strong> Returns the information about a transaction requested by transaction
+                    hash.</p>
+                <p><strong>Parameters:</strong></p>
+                <ul>
+                    <li><strong>transactionHash</strong> (string): The transaction hash.</li>
+                </ul>
+                <p><strong>Response:</strong> Transaction details.</p>
+
+                <h2>6. eth_getBlockByHash</h2>
+                <p><strong>Description:</strong> Returns information about a block by its hash.</p>
+                <p><strong>Parameters:</strong></p>
+                <ul>
+                    <li><strong>blockHash</strong> (string): The block hash.</li>
+                </ul>
+                <p><strong>Response:</strong> Block details including transactions.</p>
+
+                <h2>7. eth_getCode</h2>
+                <h1>Temporarily unsupported</h1>
+                <p><strong>Description:</strong> Returns the code stored at a specific address.</p>
+                <p><strong>Parameters:</strong></p>
+                <ul>
+                    <li><strong>address</strong> (string): The address of the contract.</li>
+                </ul>
+                <p><strong>Response:</strong> The contract code at the given address (as a hex string).</p>
+
+                <h2>8. eth_estimateGas</h2>
+                <p><strong>Description:</strong> Estimates the gas required for a transaction.</p>
+                <p><strong>Parameters:</strong></p>
+                <ul>
+                    <li><strong>gasPrice</strong>: Price per unit gas (=1 wxei)</li>
+                    <li><strong>value</strong>: Transaction amount in wxei</li>
+                </ul>
+                <p>In this case, gasPrice and value <b>must</b> be in a dict passed as the first element of params,
+                    i.e., params must be of the form <code>[{'gasPrice': ..., 'value': ...}]</code>.</p>
+                <p><strong>Response:</strong> Estimated gas in wxei required for the transaction (hexadecimal).</p>
+
+                <h2>9. eth_gasPrice</h2>
+                <p><strong>Description:</strong> Returns the current gas price in wxei.</p>
+                <p><strong>Parameters:</strong> None</p>
+                <p><strong>Response:</strong> The current gas price (in hex).</p>
+
+                <h2>10. eth_getTransactionCount</h2>
+                <p><strong>Description:</strong> Returns the number of transactions sent from a specific address.</p>
+                <p><strong>Parameters:</strong></p>
+                <ul>
+                    <li><strong>address</strong> (string): The Ethereum/EVM wallet address.</li>
+                </ul>
+                <p><strong>Response:</strong> The transaction count for the address (in hex). Can be used as a nonce for
+                    transactions.</p>
+
+                <h2>11. eth_sendRawTransaction</h2>
+                <p><strong>Description:</strong> Sends a signed transaction to the network.</p>
+                <p><strong>Parameters:</strong></p>
+                <ul>
+                    <li><strong>signedTransaction</strong> (string): The signed raw transaction.</li>
+                </ul>
+                <p><strong>Response:</strong> Expected block number or other result depending on the type of
+                    transaction.</p>
+
+                <h2>12. eth_getTransactionReceipt</h2>
+                <p><strong>Description:</strong> Returns the receipt of a transaction by transaction hash.</p>
+                <p><strong>Parameters:</strong></p>
+                <ul>
+                    <li><strong>transactionIndex</strong> (Base 10 integer): The ID or index of the transaction.</li>
+                </ul>
+                <p><strong>Response:</strong> Transaction receipt of the first transaction in the block with that ID or
+                    index as block number, including status, gas, etc.</p>
+
+                <h2>13. net_version</h2>
+                <p><strong>Description:</strong> Returns the network version.</p>
+                <p><strong>Parameters:</strong> None</p>
+                <p><strong>Response:</strong> The network version.</p>
+            </section>
+
+            <section id="faq" class="faq-section">
+                <h2>Frequently Asked Questions</h2>
+
+                <div class="faq-item">
+                    <h3>What makes this blockchain unique?</h3>
+                    <p>XYL TestNet offers a <b>hybrid model</b> that balances speed, security, simplicity and
+                        decentralization. By optimizing for faster transactions and lower costs, it caters to real-world
+                        applications like monetization in gaming and apps that prioritize cheap, easy, and quick flow of
+                        currency, and enterprise use cases that prioritize performance.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h3>Why isn’t the chain fully decentralized?</h3>
+                    <p>While decentralization is important, its hybrid model provides the flexibility needed for
+                        <b>faster transactions</b> and <b>lower latency</b>. I am committed to increasing
+                        decentralization over time as the network and ecosystem grow.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h3>Isn’t low difficulty a security risk?</h3>
+                    <p>Security is taken seriously, and while lower difficulty allows for faster transactions
+                        (potentially making it vulnerable to spam attacks), additional measures such as strict node-side
+                        validation (rehashing, merkel roots, order of blocks, strict checks to completely restrict
+                        replay attacks or double spending ...etc.) to ensure the network remains secure and reliable.
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <h3>What are the main benefits of XYL Blockchain/Ecosystem?</h3>
+                    <p>XYL's blockchain is designed for <b>speed</b>, <b>cost-efficiency</b>, <b>easy interaction</b>
+                        and <b>flexibility</b>. Whether you’re developing dApps, using it as a currency for your games,
+                        working with enterprise applications, or simply want to move coins in and out quickly and
+                        easily, you’ll benefit from fast block times and low transaction fees. An <b>official
+                            middleware</b> helps to easily track transactions, warn about issues beforehand, ...etc,
+                        which is often ignored in general EVM wallets.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h3>What are the advantages for developers?</h3>
+                    <p>XYL TestNet is a <b>hybrid EVM-compatible blockchain</b>, that is, it follows most standards and
+                        structures of Ethereum, but additions and slight modifications are made wherever necessary. XYL
+                        has a <b>unique bytecode</b> or instruction set for programming smart contracts, which makes it
+                        much easier and straightforward to deploy and execute contracts. <b>Python libraries</b>, as a
+                        supplement to existing libraries like Web3, are also available to help interact with the testnet
+                        easily and efficiently.</p>
+                </div>
+
+                <h2>More about the TestNet</h2>
+                <p>XYL prioritizes <b>speed and flexibility</b> while maintaining a balance between decentralization and
+                    control to improve <b>security and efficiency</b>.</p>
+                <p>It is designed for real-world applications where <b>performance, cost, flexibility and speed</b>
+                    matters—whether you're building real-time apps, games, or anything that requires ultra-low latency.
+                </p>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 XYL TestNet | <a href="#">Terms of Use</a> | <a href="#">Privacy Policy</a></p>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Select all sidebar links and sections
+            const sidebarLinks = document.querySelectorAll("a");
+            const sections = document.querySelectorAll(".content section");
+
+            // Add click event listener to each sidebar link
+            sidebarLinks.forEach(link => {
+                link.addEventListener("click", (e) => {
+                    if (!link.getAttribute("href").includes("#")) { return; }
+                    e.preventDefault(); // Prevent default anchor jump behavior
+
+                    // Get the target section's ID from the href attribute
+                    const targetId = link.getAttribute("href").slice(1); // Remove the '#' from href
+
+                    // Show the target section and hide others
+                    sections.forEach(section => {
+                        if (section.id === targetId) {
+                            section.style.display = "block"; // Show target section
+                        } else {
+                            section.style.display = "none"; // Hide other sections
+                        }
+                    });
+
+                    // Optional: Scroll to the top of the section
+                    // document.getElementById(targetId).scrollIntoView({ behavior: "smooth" });
+                });
+            });
+
+            // Initially show only the first section
+            sections.forEach((section, index) => {
+                section.style.display = index === 0 ? "block" : "none";
+            });
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // Select all sections
+            const sections = document.querySelectorAll(".content section");
+
+            // Function to show the section based on the hash
+            const showSectionFromHash = () => {
+                const hash = window.location.hash.slice(1); // Get hash without the '#'
+                if (hash.length == 0) { return; }
+
+                // Loop through sections and toggle visibility
+                sections.forEach(section => {
+                    if (section.id === hash) {
+                        section.style.display = "block";
+                    } else {
+                        section.style.display = "none";
+                    }
+                });
+            };
+
+            // Add event listener for hash change
+            window.addEventListener("hashchange", showSectionFromHash);
+
+            // Show section on initial page load
+            showSectionFromHash();
+
+            // Default behavior if no hash is provided
+            if (!window.location.hash) {
+                sections.forEach((section, index) => {
+                    section.style.display = index === 0 ? "block" : "none"; // Show the first section
+                });
+            }
+        });
+
+    </script>
+</body>
+
+</html>
