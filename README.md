@@ -1,6 +1,6 @@
-# XYL Testnet
+# XYL TestNet
 
-XYL Testnet is a blockchain network created for testing and development purposes, specifically designed to evaluate the functionality and features of the XYL ecosystem. This testnet is used to simulate transactions, mining, and other blockchain operations before the official release of XYL's mainnet.
+XYL TestNet is a blockchain network created for testing and development purposes, specifically designed to evaluate the functionality and features of the XYL ecosystem. This testnet is used to simulate transactions, mining, and other blockchain operations before the official release of XYL's mainnet.
 
 ## 🌟 Key Features
 
