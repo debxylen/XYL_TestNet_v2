@@ -1,3 +1,11 @@
+# ⚠️ DEPRECATED / ARCHIVED
+
+> **Warning:** This version of XYL TestNet is **not maintained** and should **not be used for testing or development**.  
+> The RPC endpoints in this testnet are **no longer active**.  
+> For the latest maintained version, see [Xylume TestNet](https://github.com/debxylen/Xylume_TestNet/).  
+
+---
+
 # XYL TestNet
 
 XYL TestNet is a blockchain network created for testing and development purposes, specifically designed to evaluate the functionality and features of the XYL ecosystem. This testnet is used to simulate transactions, mining, and other blockchain operations before the official release of XYL's mainnet.
